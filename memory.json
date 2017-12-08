@@ -1,0 +1,1 @@
+{"Testing": {"weight": 0, "related_words": ["one"]}, "one": {"weight": 1, "related_words": ["two", "nine"]}, "two": {"weight": 0, "related_words": ["three"]}, "three": {"weight": 1, "related_words": ["four", "five"]}, "five": {"weight": 0, "related_words": ["one"]}}
