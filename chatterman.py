@@ -56,7 +56,7 @@ async def on_message(message):
     if client.user.mention in message.content:
         if message.author.id in config["authority"]:
             if 'die' in message.content:
-                await client.send_message(message.channel, "x_x")
+                await message.channel.send("x_x")
                 save_brain()
                 client.logout()
                 sys.exit()
@@ -71,15 +71,14 @@ async def on_message(message):
                     else:
                         response += 'i cant'
 
-                    await client.send_message(
-                        message.channel, response)
+                    await message.channel.send(response)
                 return
 
         response = brain.get_response(message.content)
 
         if response is not None:
             out = message.author.mention + " " + response
-            await client.send_message(message.channel, out)
+            await message.channel.send(out)
 
     brain.learn(message.content.replace(client.user.mention, ''))
 try:
