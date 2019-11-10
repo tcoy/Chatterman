@@ -36,16 +36,14 @@ class ChatterBrain:
             token.weight = obj['weight']
             token.related_words = obj['related_words']
             self.memory[phrase] = token
-        print("Loaded memory")
 
     def save(self, outfile):
         outfile.write(json.dumps(self.memory, default=Token.serialize))
 
     def learn(self, strinput):
-        sents = sent_tokenize(strinput)
+        sents = sent_tokenize(strinput.lower())
 
         for sent in sents:
-            print('Processing sentence %s' % sent)
             words = word_tokenize(
                 re.sub('[' + string.punctuation + ']', '', sent))
 
@@ -76,10 +74,14 @@ class ChatterBrain:
         if len(self.memory) < 1:
             return None
 
-        start_phrase = random.choice(list(self.memory))
+        phrases_of_interest = self.get_phrases_of_interest(strinput.lower())
+
+        start_phrase = random.choice(list(phrases_of_interest)) if len(
+            phrases_of_interest) > 0 else random.choice(list(self.memory))
         current_phrase = start_phrase
         current_token = self.memory[current_phrase]
         response = current_phrase
+        used_phrases = [current_phrase]
         while len(current_token.related_words) > 0:
             next_word = random.choice(current_token.related_words)
             response += ' ' + next_word
@@ -88,9 +90,26 @@ class ChatterBrain:
             next_phrase = ' '.join(
                 full_phrase[len(full_phrase) - self.phrase_step::])
 
-            if next_phrase not in self.memory:
+            if next_phrase not in self.memory or next_phrase in used_phrases:
                 break
 
             current_phrase = next_phrase
             current_token = self.memory[current_phrase]
+            used_phrases.append(current_phrase)
         return response
+
+    def get_phrases_of_interest(self, strinput):
+        phrases = []
+        sents = sent_tokenize(strinput)
+
+        for sent in sents:
+            words = [word for word in word_tokenize(
+                re.sub('[' + string.punctuation + ']', '', sent)) if word.lower() not in stopwords.words('english')]
+
+            for word in words:
+                for phrase in self.memory:
+                    token = self.memory[phrase]
+                    if word in token.related_words and phrase not in phrases:
+                        phrases.append(phrase)
+
+        return phrases
