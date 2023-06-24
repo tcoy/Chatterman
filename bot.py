@@ -5,8 +5,8 @@ import discord
 import atexit
 import signal
 
-CONFIG_FILENAME = './config.json'
-MEMORY_FILENAME = './memory.json'
+CONFIG_FILENAME = 'config.json'
+MEMORY_FILENAME = 'memory.json'
 
 def load_config():
 	global config
