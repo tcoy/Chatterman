@@ -70,30 +70,31 @@ def reply(str):
 	
 	str = str.lower()
 	has_memory = len(memory) > 0
+	response = '\U0001F64A' # no response
+	
+	if has_memory:
+		phrases_of_interest = _get_phrases_of_interest(str)
+
+		start_phrase = random.choice(list(phrases_of_interest)) if len(
+			phrases_of_interest) > 0 else random.choice(list(memory))
+		current_phrase = start_phrase
+		current_token = memory[current_phrase]
+		response = current_phrase
+		used_phrases = [current_phrase]
+		while len(current_token['related_words']) > 0:
+			next_word = random.choice(current_token['related_words'])
+			response += ' ' + next_word
+			full_phrase = word_tokenize(current_phrase)
+			full_phrase.append(next_word)
+			next_phrase = ' '.join(full_phrase[len(full_phrase) - phrase_step::])
+
+			if next_phrase not in memory or next_phrase in used_phrases:
+				break
+
+			current_phrase = next_phrase
+			current_token = memory[current_phrase]
+			used_phrases.append(current_phrase)
+
 	read(str)
 
-	if not has_memory:
-		return '\U0001F64A' # can't respond
-
-	phrases_of_interest = _get_phrases_of_interest(str)
-
-	start_phrase = random.choice(list(phrases_of_interest)) if len(
-		phrases_of_interest) > 0 else random.choice(list(memory))
-	current_phrase = start_phrase
-	current_token = memory[current_phrase]
-	response = current_phrase
-	used_phrases = [current_phrase]
-	while len(current_token['related_words']) > 0:
-		next_word = random.choice(current_token['related_words'])
-		response += ' ' + next_word
-		full_phrase = word_tokenize(current_phrase)
-		full_phrase.append(next_word)
-		next_phrase = ' '.join(full_phrase[len(full_phrase) - phrase_step::])
-
-		if next_phrase not in memory or next_phrase in used_phrases:
-			break
-
-		current_phrase = next_phrase
-		current_token = memory[current_phrase]
-		used_phrases.append(current_phrase)
 	return response
