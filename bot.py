@@ -3,6 +3,7 @@ import sys
 import chatterman
 import discord
 import atexit
+import signal
 
 CONFIG_FILENAME = './config.json'
 MEMORY_FILENAME = './memory.json'
@@ -27,6 +28,9 @@ def save_memory():
 	with open(MEMORY_FILENAME, 'w+') as memory_file:
 			memory_file.write(json.dumps(chatterman.memory))
 			print("Memory saved")
+
+def sig_handler(signo, frame):
+    sys.exit(0)
 
 if not load_config():
 	sys.exit("Failed to load bot.py config!")
@@ -54,4 +58,5 @@ async def on_message(message):
 		await message.channel.send(out)
 
 atexit.register(save_memory)
+signal.signal(signal.SIGTERM, sig_handler)
 client.run(config['token'])
