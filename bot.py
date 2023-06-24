@@ -4,8 +4,8 @@ import chatterman
 import discord
 import atexit
 
-CONFIG_FILENAME = 'config.json'
-MEMORY_FILENAME = 'memory.json'
+CONFIG_FILENAME = './config.json'
+MEMORY_FILENAME = './memory.json'
 
 def load_config():
 	global config
@@ -17,7 +17,7 @@ def load_config():
 		return False
 	
 def load_memory():
-	with open(MEMORY_FILENAME, 'w+') as memory_file:
+	with open(MEMORY_FILENAME, 'r') as memory_file:
 		try:
 			return json.load(memory_file)
 		except json.JSONDecodeError:
@@ -49,7 +49,7 @@ async def on_message(message):
 		return
 
 	if client.user.mention in message.content:
-		response = chatterman.reply(message.content)
+		response = chatterman.reply(message.content.replace(client.user.mention, ''))
 		out = message.author.mention + " " + response
 		await message.channel.send(out)
 

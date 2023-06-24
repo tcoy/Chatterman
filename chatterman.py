@@ -73,7 +73,7 @@ def reply(str):
 	_learn(str)
 
 	if not has_memory:
-		return '\U0001F633' # flushed
+		return '\U0001F64A' # can't respond
 
 	phrases_of_interest = _get_phrases_of_interest(str)
 
