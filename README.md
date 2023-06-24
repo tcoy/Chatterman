@@ -1,2 +1,2 @@
 # Chatterman
-Discord chat bot, built with ChatterBrain
+Python-based Markov chain Discord chat bot
