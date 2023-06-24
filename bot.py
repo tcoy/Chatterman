@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 import chatterman
 import discord
@@ -51,11 +52,15 @@ async def on_ready():
 async def on_message(message):
 	if message.author.bot:
 		return
+	
+	content = re.sub('<(?::\w+:|@!*&*|#)[0-9]+>', '', message.content) # scrub it for discord markup
 
-	if client.user.mention in message.content:
-		response = chatterman.reply(message.content.replace(client.user.mention, ''))
+	if client.user.mention in content:
+		response = chatterman.reply(content)
 		out = message.author.mention + " " + response
 		await message.channel.send(out)
+	else:
+		chatterman.read(content)
 
 atexit.register(save_memory)
 signal.signal(signal.SIGTERM, sig_handler)

@@ -9,7 +9,31 @@ from nltk.corpus import stopwords
 memory = {}
 phrase_step = 1
 
-def _learn(str):
+def _get_phrases_of_interest(str):
+	phrases = []
+	sents = sent_tokenize(str)
+
+	for sent in sents:
+		words = [word for word in word_tokenize(
+			re.sub('[' + string.punctuation + ']', '', sent)) if word.lower() not in stopwords.words('english')]
+
+		for word in words:
+			for phrase in memory:
+				token = memory[phrase]
+				if word in token['related_words'] and phrase not in phrases:
+					phrases.append(phrase)
+
+	return phrases
+
+def _has_corpa():
+	try:
+		nltk.find('tokenizers/punkt')
+		nltk.find('corpora/stopwords')
+		return True
+	except LookupError:
+		return False
+	
+def read(str):
 	sents = sent_tokenize(str.lower())
 
 	for sent in sents:
@@ -39,30 +63,6 @@ def _learn(str):
 
 			token['related_words'].append(related_word)
 			memory[phrase] = token
-
-def _get_phrases_of_interest(str):
-	phrases = []
-	sents = sent_tokenize(str)
-
-	for sent in sents:
-		words = [word for word in word_tokenize(
-			re.sub('[' + string.punctuation + ']', '', sent)) if word.lower() not in stopwords.words('english')]
-
-		for word in words:
-			for phrase in memory:
-				token = memory[phrase]
-				if word in token['related_words'] and phrase not in phrases:
-					phrases.append(phrase)
-
-	return phrases
-
-def _has_corpa():
-	try:
-		nltk.find('tokenizers/punkt')
-		nltk.find('corpora/stopwords')
-		return True
-	except LookupError:
-		return False
 	
 def reply(str):
 	if not _has_corpa():
@@ -70,7 +70,7 @@ def reply(str):
 	
 	str = str.lower()
 	has_memory = len(memory) > 0
-	_learn(str)
+	read(str)
 
 	if not has_memory:
 		return '\U0001F64A' # can't respond
