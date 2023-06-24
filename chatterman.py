@@ -1,91 +1,99 @@
-import discord
-import asyncio
-import json
-import sys
+import string
+import re
+import random
 
-from chatterbrain.chatterbrain import ChatterBrain
-from chatterbrain.teachers.reddit import RedditTeacher
+import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.corpus import stopwords
 
-CONFIG_FILENAME = 'config.json'
-MEMORY_FILENAME = 'memory.json'
+memory = {}
+phrase_step = 1
 
-client = discord.Client()
-config = {}
+def _learn(str):
+	sents = sent_tokenize(str.lower())
 
+	for sent in sents:
+		words = word_tokenize(
+			re.sub('[' + string.punctuation + ']', '', sent))
 
-def load_config():
-    global config
-    try:
-        with open(CONFIG_FILENAME) as config_file:
-            config = json.load(config_file)
-        return True
-    except FileNotFoundError:
-        return False
+		if len(words) <= phrase_step:
+			continue
 
+		for i in range(0, len(words)):
+			phrase = ' '.join(words[i:i + phrase_step:1])
+			related_word = None
 
-if load_config():
-    print('Config loaded.')
-else:
-    print('Failed to load config')
-    exit()
+			if i + phrase_step < len(words):
+				related_word = words[i + phrase_step]
+			else:
+				break
 
-brain = ChatterBrain(phrase_step=config.get('phrase_step', 1))
-reddit_teacher = RedditTeacher(brain)
+			token = memory.get(phrase)
 
+			if token == None:
+				token = {}
+				token['weight'] = 0
+				token['related_words'] = []
+			else:
+				token['weight'] += 1
 
-def save_brain():
-    global brain
-    with open(MEMORY_FILENAME, 'w+') as memory_file:
-        brain.save(memory_file)
-        print("Saved memory")
+			token['related_words'].append(related_word)
+			memory[phrase] = token
 
+def _get_phrases_of_interest(str):
+	phrases = []
+	sents = sent_tokenize(str)
 
-@client.event
-async def on_ready():
-    print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
-    print('------')
+	for sent in sents:
+		words = [word for word in word_tokenize(
+			re.sub('[' + string.punctuation + ']', '', sent)) if word.lower() not in stopwords.words('english')]
 
+		for word in words:
+			for phrase in memory:
+				token = memory[phrase]
+				if word in token['related_words'] and phrase not in phrases:
+					phrases.append(phrase)
 
-@client.event
-async def on_message(message):
-    if message.author.bot:
-        return
+	return phrases
 
-    if client.user.mention in message.content:
-        if message.author.id in config["authority"]:
-            if 'die' in message.content:
-                await message.channel.send("x_x")
-                save_brain()
-                client.logout()
-                sys.exit()
-                return
-            elif '.reddit' in message.content:
-                cmd = message.content.split()
-                if len(cmd) > 1:
-                    response = message.author.mention + ' '
+def _has_corpa():
+	try:
+		nltk.find('tokenizers/punkt')
+		nltk.find('corpora/stopwords')
+		return True
+	except LookupError:
+		return False
+	
+def reply(str):
+	if not _has_corpa():
+		return '\U0001F648' # error!
+	
+	str = str.lower()
+	has_memory = len(memory) > 0
+	_learn(str)
 
-                    if reddit_teacher.teach(cmd[2]):
-                        response += 'ok'
-                    else:
-                        response += 'i cant'
+	if not has_memory:
+		return '\U0001F633' # flushed
 
-                    await message.channel.send(response)
-                return
+	phrases_of_interest = _get_phrases_of_interest(str)
 
-        response = brain.get_response(message.content)
+	start_phrase = random.choice(list(phrases_of_interest)) if len(
+		phrases_of_interest) > 0 else random.choice(list(memory))
+	current_phrase = start_phrase
+	current_token = memory[current_phrase]
+	response = current_phrase
+	used_phrases = [current_phrase]
+	while len(current_token['related_words']) > 0:
+		next_word = random.choice(current_token['related_words'])
+		response += ' ' + next_word
+		full_phrase = word_tokenize(current_phrase)
+		full_phrase.append(next_word)
+		next_phrase = ' '.join(full_phrase[len(full_phrase) - phrase_step::])
 
-        if response is not None:
-            out = message.author.mention + " " + response
-            await message.channel.send(out)
+		if next_phrase not in memory or next_phrase in used_phrases:
+			break
 
-    brain.learn(message.content.replace(client.user.mention, ''))
-try:
-    with open(MEMORY_FILENAME) as memory_file:
-        brain.load(memory_file)
-        print('Memory loaded')
-except FileNotFoundError:
-    print('Could not load memory, no file found')
-
-client.run(config['token'])
+		current_phrase = next_phrase
+		current_token = memory[current_phrase]
+		used_phrases.append(current_phrase)
+	return response
