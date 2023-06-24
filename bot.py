@@ -53,14 +53,14 @@ async def on_message(message):
 	if message.author.bot:
 		return
 	
-	content = re.sub('<(?::\w+:|@!*&*|#)[0-9]+>', '', message.content) # scrub it for discord markup
+	clean_content = re.sub('<(?::\w+:|@!*&*|#)[0-9]+>', '', message.content) # scrub it for discord markup
 
-	if client.user.mention in content:
-		response = chatterman.reply(content)
+	if client.user.mention in message.content:
+		response = chatterman.reply(clean_content)
 		out = message.author.mention + " " + response
 		await message.channel.send(out)
 	else:
-		chatterman.read(content)
+		chatterman.read(clean_content)
 
 atexit.register(save_memory)
 signal.signal(signal.SIGTERM, sig_handler)
