@@ -94,6 +94,8 @@ def reply(str):
 			current_phrase = next_phrase
 			current_token = memory[current_phrase]
 			used_phrases.append(current_phrase)
+		if random.randint(0, 10)==10: response += ' ' + random.choice(['🥵','😊','🥺','🙈','🙉','🙊','😈','😏','😄','🤢','😬'])
+
 
 	read(str)
 
