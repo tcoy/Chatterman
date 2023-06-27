@@ -5,6 +5,7 @@ import random
 import nltk
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
+from nltk.corpus import names as nltknames
 
 memory = {}
 phrase_step = 1
@@ -74,9 +75,14 @@ def reply(str):
 	
 	if has_memory:
 		phrases_of_interest = _get_phrases_of_interest(str)
+		names = [name for name in phrases_of_interest if name.title() in nltknames.words('male.txt') or name.title() in nltknames.words('female.txt')]
 
-		start_phrase = random.choice(list(phrases_of_interest)) if len(
-			phrases_of_interest) > 0 else random.choice(list(memory))
+		if len(names) > 0:
+			start_phrase = random.choice(names)
+		else:
+			start_phrase = random.choice(list(phrases_of_interest)) if len(
+				phrases_of_interest) > 0 else random.choice(list(memory))
+			
 		current_phrase = start_phrase
 		current_token = memory[current_phrase]
 		response = current_phrase
