@@ -13,14 +13,13 @@ phrase_step = 1
 def _is_name(word):
 	return word.title() in names.words('male.txt') or word.title() in names.words('female.txt')
 
-def _interest_words(str):
-	words = set(word_tokenize(str.lower()))
+def _interest_words(s):
+	words = set(item for sublist in _tokenize(s) for item in sublist)
 	stops = set(stopwords.words('english'))
-	punc = set([*string.punctuation])
-	return words - stops - punc
+	return words - stops
 
-def _interest_tokens(str):
-	interest_words = _interest_words(str)
+def _interest_tokens(s):
+	interest_words = _interest_words(s)
 	interest_tokens = {}
 	for word in interest_words:
 		for k, v in memory.items():
@@ -65,36 +64,26 @@ def _token_right(response):
 				next_phrase = ' '.join(words[-phrase_step:])
 				if next_phrase not in response:
 					if w not in choices:
-						choices.append(w )
+						choices.append(w)
 						weights.append(0)
 					if (next_token := memory.get(next_phrase)) is not None:
 						weights[choices.index(w)] += next_token['weight']
 					else:
-						weights[choices.index(w)] += token['weight']				
+						weights[choices.index(w)] += token['weight']			
 				words.pop()
 			if any(w > 0 for w in weights):
-				choice = random.choices(choices, weights = weights, k = 1)[0]
-				if choice is not None:
-					print(choice + ' : ' + str(weights[choices.index(choice)]))
-				else:
-					print('None : ' + str(weights[choices.index(choice)]))
-				return choice
+				return random.choices(choices, weights = weights, k = 1)[0]
 			elif len(choices) > 0: # possible all related words were popped
-				choice = random.choice(choices)
-				if choice is not None:
-					print(choice + ' : random')
-				else:
-					print('None : random')
-				return choice
+				return random.choice(choices)
 	return None
 
-def _pick_start_token(str):
-	interest_tokens = _interest_tokens(str)
+def _pick_start_token(s):
+	interest_tokens = _interest_tokens(s)
 	population = interest_tokens if len(interest_tokens) > 0 else memory # use interest tokens if avaiable, else use anything from memory
 	return _weighted_choice(population)
 	
-def _generate_response(str):
-	phrase = _pick_start_token(str)
+def _generate_response(s):
+	phrase = _pick_start_token(s)
 	print('start: ' + phrase)
 	response = phrase
 
@@ -114,12 +103,16 @@ def _has_corpa():
 	except LookupError:
 		return False
 	
-def read(str):
-	sents = sent_tokenize(str.lower())
+def _sanitize_input(s):
+	return s.lower().translate(str.maketrans('', '', string.punctuation))
 
-	for sent in sents:
-		words = word_tokenize(sent)
+def _tokenize(s):
+	return list(map(word_tokenize, list(map(_sanitize_input, sent_tokenize(s)))))
 
+def read(s):
+	sents = _tokenize(s)
+
+	for words in sents:
 		if len(words) <= phrase_step:
 			continue
 
@@ -145,19 +138,17 @@ def read(str):
 				token['related_words'].append(related_word)
 			memory[phrase] = token
 	
-def reply(str):
+def reply(s):
 	if not _has_corpa():
 		return '🙈' # error!
 	
-	str = str.lower()
 	has_memory = len(memory) > 0
 	response = '🙊' # no response
 	
 	if has_memory:
-		response = _generate_response(str)
-		response = re.sub(' \'', '\'', response)
-		if random.randint(0, 10)==10: response += ' ' + random.choice(['🥵','😊','🥺','🙈','🙉','🙊','😈','😏','😄','🤢','😬'])
+		response = _generate_response(s)
+		if random.randint(1, 10)==10: response += ' ' + random.choice(['🥵','😊','🥺','🙈','🙉','🙊','😈','😏','😄','🤢','😬'])
 
-	read(str)
+	read(s)
 
 	return response
