@@ -50,7 +50,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-	if message.author.bot:
+	if message.author.bot or len(message.embeds) > 0:
 		return
 	
 	clean_content = re.sub('<(?::\w+:|@!*&*|#)[0-9]+>', '', message.content) # scrub it for discord markup
