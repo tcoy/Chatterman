@@ -1,8 +1,9 @@
 import string
 import re
 import random
-
 import nltk
+import unicodedata
+import sys
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
 from nltk.corpus import names
@@ -103,8 +104,11 @@ def _has_corpa():
 	except LookupError:
 		return False
 	
+unikeys = dict.fromkeys(i for i in range(sys.maxunicode)
+                      if unicodedata.category(chr(i)).startswith('P'))
+
 def _sanitize_input(s):
-	return s.lower().translate(str.maketrans('', '', string.punctuation))
+	return s.lower().translate(str.maketrans('', '', string.punctuation)).translate(unikeys)
 
 def _tokenize(s):
 	return list(map(word_tokenize, list(map(_sanitize_input, sent_tokenize(s)))))
