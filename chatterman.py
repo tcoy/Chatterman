@@ -89,9 +89,9 @@ def _generate_response(s):
 	response = phrase
 
 	while (right := _token_right(response)) is not None:
-		response = response + ' ' + right # append left
-		if (left := _token_left(response)) is not None:
-			response = left + ' ' + response
+		response = response + ' ' + right 
+		# if (left := _token_left(response)) is not None:
+		# 	response = left + ' ' + response
 
 	return response
 
